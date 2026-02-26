@@ -1,0 +1,99 @@
+from pomegranate import DiscreteDistribution
+from pomegranate import ConditionalProbabilityTable
+from pomegranate import State, BayesianNetwork
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# DEFINICIÓN DE DISTRIBUCIONES
+
+
+# Distribuciones iniciales (
+estudio = DiscreteDistribution({
+    "Bajo": 0.4,
+    "Alto": 0.6
+})
+
+asistencia = DiscreteDistribution({
+    "Baja": 0.3,
+    "Alta": 0.7
+})
+
+dificultad = DiscreteDistribution({
+    "Fácil": 0.5,
+    "Difícil": 0.5
+})
+
+# Distribución condicional de aprobación
+aprueba = ConditionalProbabilityTable(
+    [
+        ["Bajo", "Baja", "Fácil", "Sí", 0.4],
+        ["Bajo", "Baja", "Fácil", "No", 0.6],
+        ["Bajo", "Baja", "Difícil", "Sí", 0.1],
+        ["Bajo", "Baja", "Difícil", "No", 0.9],
+
+        ["Bajo", "Alta", "Fácil", "Sí", 0.6],
+        ["Bajo", "Alta", "Fácil", "No", 0.4],
+        ["Bajo", "Alta", "Difícil", "Sí", 0.2],
+        ["Bajo", "Alta", "Difícil", "No", 0.8],
+
+        ["Alto", "Baja", "Fácil", "Sí", 0.7],
+        ["Alto", "Baja", "Fácil", "No", 0.3],
+        ["Alto", "Baja", "Difícil", "Sí", 0.4],
+        ["Alto", "Baja", "Difícil", "No", 0.6],
+
+        ["Alto", "Alta", "Fácil", "Sí", 0.95],
+        ["Alto", "Alta", "Fácil", "No", 0.05],
+        ["Alto", "Alta", "Difícil", "Sí", 0.7],
+        ["Alto", "Alta", "Difícil", "No", 0.3],
+    ],
+    [estudio, asistencia, dificultad]
+)
+
+# CREACIÓN DE LA RED BAYESIANA
+
+
+s1 = State(estudio, name="Estudio")
+s2 = State(asistencia, name="Asistencia")
+s3 = State(dificultad, name="Dificultad")
+s4 = State(aprueba, name="Aprueba")
+
+modelo = BayesianNetwork("Modelo Aprobación")
+
+modelo.add_states(s1, s2, s3, s4)
+modelo.add_edge(s1, s4)
+modelo.add_edge(s2, s4)
+modelo.add_edge(s3, s4)
+
+modelo.bake()
+
+# INFERENCIA
+
+# Probabilidad de aprobar si estudia alto y asistencia alta
+resultado = modelo.predict_proba({
+    "Estudio": "Alto",
+    "Asistencia": "Alta",
+    "Dificultad": "Difícil"
+})
+
+print("Probabilidad de aprobar:")
+print(resultado[3].parameters)
+
+# SIMULACIÓN DE DATOS
+
+datos = modelo.sample(1000)
+df = pd.DataFrame(datos, columns=["Estudio", "Asistencia", "Dificultad", "Aprueba"])
+
+
+prob_aprueba = df["Aprueba"].value_counts(normalize=True)
+
+print("\nProbabilidad estimada desde simulación:")
+print(prob_aprueba)
+
+
+# GRÁFICA
+
+prob_aprueba.plot(kind="bar")
+plt.title("Probabilidad de Aprobar vs No Aprobar")
+plt.ylabel("Probabilidad")
+plt.show()
