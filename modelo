@@ -79,21 +79,46 @@ resultado = modelo.predict_proba({
 print("Probabilidad de aprobar:")
 print(resultado[3].parameters)
 
-# SIMULACIÓN DE DATOS
+# ==============================
+# SIMULACIÓN DE 3 CASOS
+# ==============================
 
-datos = modelo.sample(1000)
-df = pd.DataFrame(datos, columns=["Estudio", "Asistencia", "Dificultad", "Aprueba"])
+import random
+
+n = 10000
+
+casos = {
+    "Desfavorable": ("Bajo", "Baja", "Difícil"),
+    "Intermedio": ("Alto", "Baja", "Fácil"),
+    "Favorable": ("Alto", "Alta", "Fácil")
+}
+
+resultados_finales = {}
+
+for nombre, (e, a, d) in casos.items():
+    aprobados = 0
+    
+    for _ in range(n):
+        prob = prob_condicional[(e, a, d)]
+        if random.random() < prob:
+            aprobados += 1
+    
+    resultados_finales[nombre] = aprobados / n
 
 
-prob_aprueba = df["Aprueba"].value_counts(normalize=True)
+print("\nProbabilidades estimadas por simulación:")
+for caso, valor in resultados_finales.items():
+    print(caso, ":", round(valor, 4))
 
-print("\nProbabilidad estimada desde simulación:")
-print(prob_aprueba)
 
+# ==============================
+# GRÁFICA COMPARATIVA
+# ==============================
 
-# GRÁFICA
+import matplotlib.pyplot as plt
 
-prob_aprueba.plot(kind="bar")
-plt.title("Probabilidad de Aprobar vs No Aprobar")
-plt.ylabel("Probabilidad")
+plt.bar(resultados_finales.keys(), resultados_finales.values())
+plt.title("Comparación de Probabilidad de Aprobación")
+plt.ylabel("Probabilidad de Aprobar")
+plt.xlabel("Casos")
 plt.show()
