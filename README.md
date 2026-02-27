@@ -1,0 +1,1 @@
+Este programa modela la probabilidad de que un estudiante apruebe una maateria dependiendo de tres condiciones, como la asistencia, estudio y dificultad de la materia, se usaron valores estimados para su probabilidad, pero en realidad esos valores pueden cambiarse dependiendo del contexto.
